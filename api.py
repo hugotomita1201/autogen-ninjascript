@@ -1,4 +1,4 @@
-# api.py (Final, Robust Version)
+# api.py (The Final, Working Version)
 
 import os
 import uuid
@@ -17,11 +17,9 @@ class ChatRequest(BaseModel):
 # --- FastAPI App Setup ---
 app = FastAPI(title="Autogen Conversational API")
 
-# --- CORS Middleware ---
-# This block allows your frontend to communicate with your backend.
 origins = [
     "http://localhost:8080",
-    "https://ninjascript-frontend.onrender.com",  # <-- MAKE SURE THIS IS YOUR CORRECT RENDER FRONTEND URL
+    "https://ninjascript-frontend.onrender.com",  # <-- MAKE SURE THIS IS YOUR FRONTEND URL
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -35,8 +33,6 @@ app.add_middleware(
 chat_sessions = {}
 
 # --- Autogen Configuration ---
-# We are using the "google" api_type as it's the valid one for Autogen's config,
-# and we are relying on the GOOGLE_CLOUD_PROJECT environment variable to prevent the crash.
 config_list = [
     {
         "model": "gemini-1.5-pro-latest",
@@ -51,12 +47,21 @@ llm_config = {"config_list": config_list, "timeout": 180}
 def is_termination_msg(content):
     have_content = content.get("content", "") is not None
     if have_content:
+        # The User Proxy will terminate the conversation when it sees the final trigger phrase
         if "GENERATE_THE_CODE" in content["content"].upper():
             return True
     return False
 
 
-# This agent guides the user through the checklist
+# USER PROXY AGENT (Configured for interaction)
+user_proxy = autogen.UserProxyAgent(
+    name="User_Proxy",
+    human_input_mode="NEVER",  # The user's input will be sent programmatically
+    is_termination_msg=is_termination_msg,
+    code_execution_config=False,
+)
+
+# ORCHESTRATOR AGENT
 orchestrator = autogen.AssistantAgent(
     name="Orchestrator",
     llm_config=llm_config,
@@ -70,7 +75,7 @@ orchestrator = autogen.AssistantAgent(
     If the user confirms, you MUST end your response with the exact phrase: 'GENERATE_THE_CODE'""",
 )
 
-# This agent's only job is to write the final code
+# CODER AGENT
 coder_agent = autogen.AssistantAgent(
     name="Coder",
     llm_config=llm_config,
@@ -79,64 +84,58 @@ coder_agent = autogen.AssistantAgent(
     Wrap the final code in ```csharp ... ```.""",
 )
 
-# --- API Endpoints (New Simplified Logic) ---
 
-
+# --- API Endpoints ---
 @app.post("/start-chat")
 def start_chat(request: ChatRequest):
     session_id = str(uuid.uuid4())
 
-    # Store history for this new session
-    chat_sessions[session_id] = []
+    groupchat = autogen.GroupChat(
+        agents=[user_proxy, orchestrator],
+        messages=[],
+        max_round=15,
+        speaker_selection_method="round_robin",  # Use the simple, predictable round_robin method
+    )
+    manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+    chat_sessions[session_id] = manager
 
-    # Manually start the conversation by sending the user's first message to the Orchestrator
-    user_message = {"role": "user", "content": request.message}
-    chat_sessions[session_id].append(user_message)
+    # Initiate the chat. The user's first prompt is the first message.
+    user_proxy.initiate_chat(manager, message=request.message)
 
-    response = orchestrator.generate_reply(messages=chat_sessions[session_id])
+    # The first reply from the orchestrator is the last message in the history.
+    reply = groupchat.messages[-1]["content"]
 
-    # Save the orchestrator's first response to the history
-    assistant_message = {"role": "assistant", "content": response}
-    chat_sessions[session_id].append(assistant_message)
-
-    return {"session_id": session_id, "reply": response}
+    return {"session_id": session_id, "reply": reply}
 
 
 @app.post("/continue-chat")
 def continue_chat(request: ChatRequest):
-    session_history = chat_sessions.get(request.session_id)
-    if not session_history:
+    manager = chat_sessions.get(request.session_id)
+    if not manager:
         return {
-            "reply": "Error: Chat session not found. Please refresh and start a new chat.",
+            "reply": "Error: Chat session not found. Please start a new chat.",
             "session_id": None,
         }
 
-    # Append the user's new message to the history
-    user_message = {"role": "user", "content": request.message}
-    session_history.append(user_message)
+    # Send the user's message to the waiting agent group.
+    # The user_proxy will continue the conversation from where it left off.
+    user_proxy.send(message=request.message, recipient=manager)
 
-    # Get the next reply from the orchestrator based on the *entire* conversation history
-    response = orchestrator.generate_reply(messages=session_history)
+    # The conversation will run until it needs the next human input or terminates.
+    # The last message in the history will be the agent's next question.
+    last_message = manager.chat_messages[user_proxy][-1]
 
-    # Check for the termination trigger phrase
-    if is_termination_msg({"content": response}):
-        summary = response.replace("GENERATE_THE_CODE", "").strip()
-
-        # Call the Coder agent with the final summary
+    if is_termination_msg(last_message):
+        summary = last_message["content"].replace("GENERATE_THE_CODE", "").strip()
         final_code = coder_agent.generate_reply(
             messages=[
                 {
                     "role": "user",
-                    "content": f"Please generate the NinjaScript code for the following strategy: {summary}",
+                    "content": f"Generate NinjaScript for this summary: {summary}",
                 }
             ]
         )
-
-        # Clean up the completed session and return the final code
         del chat_sessions[request.session_id]
         return {"reply": final_code, "session_id": None}
     else:
-        # Save the new assistant message to history and continue the chat
-        assistant_message = {"role": "assistant", "content": response}
-        session_history.append(assistant_message)
-        return {"session_id": request.session_id, "reply": response}
+        return {"session_id": request.session_id, "reply": last_message["content"]}
