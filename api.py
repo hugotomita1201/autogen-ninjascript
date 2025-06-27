@@ -35,8 +35,8 @@ chat_sessions = {}
 # --- Autogen Configuration ---
 config_list = [
     {
-        "model": "gemini-1.5-pro-latest",
-        "api_key": os.getenv("GEMINI_API_KEY"),
+        "model": "gemini-2.5-flash-preview-04-17",
+        "api_key": os.getenv("AIzaSyCfAnsdMO1D02ghuaPc-ny1Vu9q6hyOGZA"),
         "api_type": "google",
     }
 ]
