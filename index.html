@@ -4,192 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversational NinjaScript Generator</title>
+    <title>NinjaScript AI Assistant</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
         body {
-            font-family: sans-serif;
-            background-color: #f4f7f9;
-            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: #ecf0f1;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
+            text-align: center;
         }
 
-        #chat-container {
-            width: 100%;
-            max-width: 600px;
-            height: 80vh;
-            background: #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
+        .container {
+            max-width: 700px;
+            padding: 40px;
         }
 
-        #chat-history {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            border-bottom: 1px solid #ddd;
+        h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .message {
+        p {
+            font-size: 1.5em;
+            font-weight: 300;
+            line-height: 1.6;
             margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            line-height: 1.4;
         }
 
-        .user-message {
+        .solution-text {
+            color: #3498db;
+            font-weight: 400;
+        }
+
+        .divider {
+            height: 2px;
+            width: 80px;
             background-color: #3498db;
+            margin: 40px auto;
+            border-radius: 2px;
+        }
+
+        .try-now-button {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 20px 40px;
+            font-size: 1.2em;
+            font-weight: 700;
             color: #fff;
-            align-self: flex-end;
-            margin-left: auto;
-        }
-
-        .bot-message {
-            background-color: #ecf0f1;
-            color: #2c3e50;
-            align-self: flex-start;
-            margin-right: auto;
-        }
-
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: "Courier New", Courier, monospace;
-            background-color: #2c3e50;
-            color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        #input-area {
-            display: flex;
-            padding: 10px;
-        }
-
-        #message-input {
-            flex-grow: 1;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 10px 15px;
-            font-size: 16px;
-        }
-
-        #send-button {
-            background: #3498db;
-            color: #fff;
+            background-color: #3498db;
             border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
-            margin-left: 10px;
+            border-radius: 50px;
+            text-decoration: none;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .try-now-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.6);
+            background-color: #4aa3df;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="chat-container">
-        <div id="chat-history">
-        </div>
-        <div id="input-area">
-            <input type="text" id="message-input" placeholder="Start by describing your strategy...">
-            <button id="send-button">→</button>
-        </div>
+    <div class="container">
+        <h1>What's the number one problem for a trader?</h1>
+        <p class="solution-text">Consistent Execution</p>
+
+        <div class="divider"></div>
+
+        <p>With algorithmic trading, this problem can be solved.</p>
+        <p>Our solution enables traders to translate text to a fully functioning NinjaScript.</p>
+
+        <a href="chat.html" class="try-now-button">TRY NOW</a>
     </div>
-
-    <script>
-        // --- Element References ---
-        const chatHistory = document.getElementById('chat-history');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-
-        // --- State Management ---
-        let sessionId = null;
-        let isWaitingForResponse = false;
-
-        // --- Helper Functions ---
-        function addMessageToHistory(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-
-            if (text.includes('```csharp')) {
-                const codeContent = text.replace(/```csharp|```/g, '').trim();
-                const pre = document.createElement('pre');
-                pre.textContent = codeContent;
-                messageDiv.appendChild(pre);
-            } else {
-                messageDiv.textContent = text;
-            }
-            chatHistory.appendChild(messageDiv);
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-
-        // --- Main Chat Logic ---
-        async function handleSendMessage() {
-            const userMessage = messageInput.value.trim();
-            if (!userMessage || isWaitingForResponse) return;
-
-            addMessageToHistory(userMessage, 'user');
-            messageInput.value = '';
-            isWaitingForResponse = true;
-
-            try {
-                let response;
-                // This is the hardcoded URL for the backend API server
-                const apiUrl = 'https://ninjascript-backend.onrender.com';
-
-                if (!sessionId) {
-                    response = await fetch(`${apiUrl}/start-chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: userMessage })
-                    });
-                } else {
-                    response = await fetch(`${apiUrl}/continue-chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ session_id: sessionId, message: userMessage })
-                    });
-                }
-
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-                const data = await response.json();
-                sessionId = data.session_id;
-                addMessageToHistory(data.reply, 'bot');
-
-                if (!sessionId) {
-                    messageInput.placeholder = 'Chat finished. Refresh to start.';
-                    messageInput.disabled = true;
-                    sendButton.disabled = true;
-                }
-
-            } catch (error) {
-                addMessageToHistory(`Error: ${error.message}. Please check the server console.`, 'bot');
-            } finally {
-                isWaitingForResponse = false;
-            }
-        }
-
-        // --- Event Listeners ---
-        sendButton.addEventListener('click', handleSendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSendMessage();
-            }
-        });
-
-        // Initial message from bot
-        addMessageToHistory('Hello! I am your NinjaScript strategy assistant. Please describe the trading idea you want to build.', 'bot');
-    </script>
 
 </body>
 
