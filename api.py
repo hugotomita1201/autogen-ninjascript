@@ -40,7 +40,7 @@ config_list = [
     {
         "model": "gemini-2.5-flash-preview-04-17",
         "api_key": os.getenv("AIzaSyCfAnsdMO1D02ghuaPc-ny1Vu9q6hyOGZA"),
-        "api_type": "gemini",  # <-- Change "google" to "gemini"
+        "api_type": "google",  # <-- Change "google" to "gemini"
     }
 ]
 llm_config = {"config_list": config_list, "timeout": 120}
