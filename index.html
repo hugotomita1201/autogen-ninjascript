@@ -149,7 +149,7 @@
                     response = await fetch(`${apiUrl}/start-chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: userMessage })
+                        body: JSON.stringify({ message: userMessage })
                     });
                 } else {
                     response = await fetch(`${apiUrl}/continue-chat`, {
