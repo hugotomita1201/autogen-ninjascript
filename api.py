@@ -22,11 +22,19 @@ class StartChatRequest(BaseModel):
 app = FastAPI(title="Autogen Conversational API")
 
 # Add CORS Middleware to allow our frontend to talk to this backend
+# The new, more specific CORS block
+
+# Define the specific origins (your frontend URLs) that are allowed to connect.
+origins = [
+    "http://localhost:8080",  # For your local development
+    "https://ninjascript-frontend.onrender.com",  # <-- IMPORTANT: REPLACE WITH YOUR LIVE FRONTEND URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,  # Use the specific list of origins
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # Be specific about allowed methods
     allow_headers=["*"],
 )
 
