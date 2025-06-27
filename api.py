@@ -50,7 +50,7 @@ CODER_SYSTEM_PROMPT = """You are a master NinjaScript 8 programmer who strictly 
 # Using the fast 'flash' model for both conversation and coding.
 orchestrator_model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
 coder_model = genai.GenerativeModel(
-    "gemini-1.5-flash-latest", system_instruction=CODER_SYSTEM_PROMPT
+    "gemini-2.5-flash-preview-04-17", system_instruction=CODER_SYSTEM_PROMPT
 )
 
 

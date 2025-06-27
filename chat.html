@@ -4,147 +4,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversational NinjaScript Generator</title>
+    <title>NinjaScript AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <style>
+        :root {
+            --background-color: #000000;
+            --text-color: #eaeaea;
+            --accent-color: #0070f3;
+            --secondary-text-color: #888888;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --container-bg: #111111;
+            --sidebar-bg: #181818;
+            --bot-message-bg: #222222;
+            --user-message-bg: var(--accent-color);
+            --hover-bg: #2a2a2a;
+        }
+
         body {
-            font-family: sans-serif;
-            background-color: #f4f7f9;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .page-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+            height: 100%;
+            max-height: 95vh;
         }
 
         #chat-container {
-            width: 100%;
-            max-width: 600px;
-            height: 80vh;
-            background: #fff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+            flex-grow: 1;
+            min-width: 400px;
             display: flex;
             flex-direction: column;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
+        /* --- NEW: Upgraded Sidebar Styles --- */
+        #sidebar {
+            flex-basis: 300px;
+            flex-shrink: 0;
+            background: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .sidebar-section h2 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--secondary-text-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-left: 10px;
+        }
+
+        .tool-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-list a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .tool-list a:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .tool-list svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+            color: var(--secondary-text-color);
+        }
+
+        /* --- END: Upgraded Sidebar Styles --- */
+
+        /* --- Existing Chat Styles (Unchanged) --- */
         #chat-history {
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
-            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            line-height: 1.5;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .message-content {
+            padding: 12px 18px;
+            border-radius: 20px;
         }
 
         .user-message {
-            background-color: #3498db;
-            color: #fff;
             align-self: flex-end;
-            margin-left: auto;
+            align-items: flex-end;
+        }
+
+        .user-message .message-content {
+            background-color: var(--user-message-bg);
+            color: #fff;
+            border-bottom-right-radius: 5px;
         }
 
         .bot-message {
-            background-color: #ecf0f1;
-            color: #2c3e50;
             align-self: flex-start;
-            margin-right: auto;
+            align-items: flex-start;
+        }
+
+        .bot-message .message-content {
+            background-color: var(--bot-message-bg);
+            color: var(--text-color);
+            border-bottom-left-radius: 5px;
         }
 
         pre {
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-family: "Courier New", Courier, monospace;
-            background-color: #2c3e50;
-            color: #fff;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.9em;
+            background-color: #0d0d0d;
             padding: 15px;
             border-radius: 8px;
+            margin: 0;
+        }
+
+        .code-block-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .code-block-wrapper:hover .copy-button {
+            opacity: 1;
         }
 
         #input-area {
             display: flex;
-            padding: 10px;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
         }
 
         #message-input {
             flex-grow: 1;
-            border: 1px solid #ddd;
+            background: #222;
+            border: 1px solid #444;
             border-radius: 20px;
-            padding: 10px 15px;
+            padding: 10px 18px;
             font-size: 16px;
+            color: var(--text-color);
+            outline: none;
+        }
+
+        #message-input:focus {
+            border-color: var(--accent-color);
         }
 
         #send-button {
-            background: #3498db;
+            background: var(--accent-color);
             color: #fff;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             font-size: 20px;
             margin-left: 10px;
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="chat-container">
-        <div id="chat-history">
+    <div class="page-wrapper">
+
+        <div id="chat-container">
+            <div id="chat-history">
+            </div>
+            <div id="input-area">
+                <input type="text" id="message-input" placeholder="Start by describing your strategy...">
+                <button id="send-button">→</button>
+            </div>
         </div>
-        <div id="input-area">
-            <input type="text" id="message-input" placeholder="Start by describing your strategy...">
-            <button id="send-button">→</button>
+
+        <div id="sidebar">
+            <div class="sidebar-section">
+                <h2>Algorithm Development</h2>
+                <ul class="tool-list">
+                    <li>
+                        <a href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Strategy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                            Load From Library
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <h2>Bug Fixing</h2>
+                <ul class="tool-list">
+                    <li>
+                        <a href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M14.5 4.5l-5 5L6 6"></path>
+                                <path d="M10 14l-5 5L1.5 15.5"></path>
+                                <path d="M18 10l5-5l-3.5-3.5L15 6"></path>
+                                <path d="M22.5 18.5l-5-5L14 17"></path>
+                            </svg>
+                            Analyze Existing Code
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
+
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
     <script>
-        // --- Element References ---
+        // The JavaScript chat logic from the previous step remains exactly the same.
+        // It does not need to be changed for this UI update.
         const chatHistory = document.getElementById('chat-history');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-
-        // --- State Management ---
         let sessionId = null;
         let isWaitingForResponse = false;
-
-        // --- Helper Functions ---
         function addMessageToHistory(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
-
             if (text.includes('```csharp')) {
-                const codeContent = text.replace(/```csharp|```/g, '').trim();
+                const summaryText = text.substring(0, text.indexOf('```csharp')).trim();
+                const codeContent = text.substring(text.indexOf('```csharp') + 8, text.lastIndexOf('```')).trim();
+                if (summaryText) {
+                    const summaryP = document.createElement('p');
+                    summaryP.className = 'message-content';
+                    summaryP.textContent = summaryText;
+                    messageDiv.appendChild(summaryP);
+                }
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block-wrapper';
                 const pre = document.createElement('pre');
-                pre.textContent = codeContent;
-                messageDiv.appendChild(pre);
+                const code = document.createElement('code');
+                code.className = 'language-csharp';
+                code.textContent = codeContent;
+                pre.appendChild(code);
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = 'Copy Code';
+                copyButton.onclick = () => {
+                    navigator.clipboard.writeText(codeContent).then(() => {
+                        copyButton.textContent = 'Copied!';
+                        setTimeout(() => { copyButton.textContent = 'Copy Code'; }, 2000);
+                    }).catch(err => console.error('Failed to copy: ', err));
+                };
+                wrapper.appendChild(pre);
+                wrapper.appendChild(copyButton);
+                messageDiv.appendChild(wrapper);
+                hljs.highlightElement(pre);
             } else {
-                messageDiv.textContent = text;
+                const p = document.createElement('p');
+                p.className = 'message-content';
+                p.textContent = text;
+                messageDiv.appendChild(p);
             }
             chatHistory.appendChild(messageDiv);
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
-
-        // --- Main Chat Logic ---
         async function handleSendMessage() {
             const userMessage = messageInput.value.trim();
             if (!userMessage || isWaitingForResponse) return;
-
             addMessageToHistory(userMessage, 'user');
             messageInput.value = '';
             isWaitingForResponse = true;
-
             try {
                 let response;
-                // This is the hardcoded URL for the backend API server
                 const apiUrl = 'https://ninjascript-backend.onrender.com';
-
                 if (!sessionId) {
                     response = await fetch(`${apiUrl}/start-chat`, {
                         method: 'POST',
@@ -158,27 +383,21 @@
                         body: JSON.stringify({ session_id: sessionId, message: userMessage })
                     });
                 }
-
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
                 const data = await response.json();
                 sessionId = data.session_id;
                 addMessageToHistory(data.reply, 'bot');
-
                 if (!sessionId) {
-                    messageInput.placeholder = 'Chat finished. Refresh to start.';
+                    messageInput.placeholder = 'Chat finished. Refresh to start a new one.';
                     messageInput.disabled = true;
                     sendButton.disabled = true;
                 }
-
             } catch (error) {
                 addMessageToHistory(`Error: ${error.message}. Please check the server console.`, 'bot');
             } finally {
                 isWaitingForResponse = false;
             }
         }
-
-        // --- Event Listeners ---
         sendButton.addEventListener('click', handleSendMessage);
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -186,8 +405,6 @@
                 handleSendMessage();
             }
         });
-
-        // Initial message from bot
         addMessageToHistory('Hello! I am your NinjaScript strategy assistant. Please describe the trading idea you want to build.', 'bot');
     </script>
 
