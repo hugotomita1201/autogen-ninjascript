@@ -35,12 +35,12 @@ app.add_middleware(
 chat_sessions = {}
 
 
-# --- Autogen Configuration ---
+# The new, specific config
 config_list = [
     {
         "model": "gemini-2.5-flash-preview-04-17",
         "api_key": os.getenv("AIzaSyCfAnsdMO1D02ghuaPc-ny1Vu9q6hyOGZA"),
-        "api_type": "google",
+        "api_type": "gemini",  # <-- Change "google" to "gemini"
     }
 ]
 llm_config = {"config_list": config_list, "timeout": 120}
