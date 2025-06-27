@@ -4,7 +4,7 @@ import autogen
 config_list = [
     {
         "model": "gemini-2.5-flash-preview-04-17",
-        "api_key": "AIzaSyCfAnsdMO1D02ghuaPc-ny1Vu9q6hyOGZA",
+        "api_key": "GEMINI_API_KEY",
         "api_type": "google",
     }
 ]
